@@ -28,6 +28,7 @@ struct threadInfo{
 	int totalRound;
 	int roundNumber;
 	int endOfEntryThisRound;
+	int comparePointerThisRound;
 };
 
 class barrier{
@@ -46,9 +47,19 @@ class barrier{
 		sem_init(&hs,0,0);
 		count = 0;
 		//totalThread=a;
-		int value;
-		//sem_getvalue(&mutex, &value);
-		//cout<<"Mutex value "<<value<<endl;			
+		int valueMutex;
+		int valueWaitq;
+		int valueThrottle;
+		int valueHs;
+		sem_getvalue(&mutex, &valueMutex);
+		sem_getvalue(&waitq, &valueWaitq);
+		sem_getvalue(&throttle, &valueThrottle);
+		sem_getvalue(&hs, &valueHs);
+		cout<<endl;
+		cout<<"Initial Mutex value "<<valueMutex<<endl;				
+		cout<<"Initial Waitq value "<<valueWaitq<<endl;			
+		cout<<"Initial Throttle value "<<valueThrottle<<endl;			
+		cout<<"Initial Hs value "<<valueHs<<endl<<endl;			
 	}
 	
 	int value;
@@ -88,12 +99,19 @@ void *maxFinder(void *arg){
 	int totalRound = p->totalRound;
 	int roundNumber = p->roundNumber;
 	int endOfEntryThisRound = p->endOfEntryThisRound;
+	int comparePointerThisRound = p->comparePointerThisRound;
 	int max[numThreadsThisRound];
-	cout<<"ThreadID: "<<id<<endl<<":endOfEntryThisRound: "<<endOfEntryThisRound<<endl;
+
+	cout<<"Round: "<<roundNumber<<endl<<"Num Thread in round "<<roundNumber<<" : "<<numThreadsThisRound<<endl;
+
+	cout<<"ThreadID: "<<id<<endl<<"endOfEntryThisRound: "<<endOfEntryThisRound<<endl<<"comparePointerThisRound: "<<comparePointerThisRound<<endl<<endl;
 	
-	max[id] = userInput[2*id]>=userInput[2*id+1]?userInput[2*id]:userInput[2*id+1];
-	//cout<<"max["<<id<<"]: "<<max[id]<<endl;
+	//max[id] = userInput[2*id]>=userInput[2*id+1]?userInput[2*id]:userInput[2*id+1];
+	max[id] = userInput[comparePointerThisRound+2*id]>=userInput[comparePointerThisRound+2*id+1]?userInput[comparePointerThisRound+2*id]:userInput[comparePointerThisRound+2*id+1];
+	cout<<"max["<<id<<"]: "<<max[id]<<endl;
 	userInput[endOfEntryThisRound+id] = max[id];
+	cout<<"userInput["<<(endOfEntryThisRound+id)<<"]: "<<userInput[endOfEntryThisRound+id]<<endl<<endl;
+		
 
 	if(roundNumber==totalRound){
 		return(NULL);
@@ -106,9 +124,9 @@ void *maxFinder(void *arg){
 	newThreadInfo.totalRound = totalRound;
 	newThreadInfo.roundNumber = roundNumber+1;
 	newThreadInfo.endOfEntryThisRound = endOfEntryThisRound+numThreadsThisRound;
+	newThreadInfo.comparePointerThisRound = endOfEntryThisRound;
 	
 	cout<<"****Just befoer barrier******"<<endl;
-	cout<<"Round: "<<roundNumber<<endl<<"Num Thread: "<<numThreadsThisRound<<endl;
 
 	barrierObj.wait(numThreadsThisRound);
 
@@ -182,6 +200,7 @@ int main(int argc, char *argv[]){
 
 	cout<<"Number of Entry: "<<numEntry<<endl;
 	cout<<"Next power of 2: "<<nextPow2<<endl;
+	cout<<"Total round required: "<<numRound<<endl;
 	
 	//fill the slot between the last entry and next power of 2 with some large negative number;
 	for(int i=numEntry; i<nextPow2; i++){
@@ -194,7 +213,7 @@ int main(int argc, char *argv[]){
 
 	//The number of threads are half of the number of entries
 	int numThreads = nextPow2/2;
-	cout<<"Required number of threads: "<<numThreads<<endl;
+	cout<<"Initial number of threads: "<<numThreads<<endl<<endl;
 
 	pthread_t *tID;
 	tID = (pthread_t *)malloc(sizeof(pthread_t)*numThreads);
@@ -210,18 +229,22 @@ int main(int argc, char *argv[]){
 		tData[i].numThreadsThisRound = numThreads;
 		tData[i].totalRound = numRound;
 		tData[i].endOfEntryThisRound = endOfEntry;
+		tData[i].comparePointerThisRound = 0;
 		//tData.initialRound = 0;
 		//cout<<"i: "<<i<<endl;
 		pthread_create(&tID[i], NULL, maxFinder, &tData[i]);
 	}
 
-	for(int i=0; i<numThreads; i++){
-		pthread_join(tID[i], NULL);
+	//for(int i=0; i<numThreads; i++){
+		pthread_join(tID[0], NULL);
 		//cout<<userInput[8+i]<<endl;
-	}
-	for(int i=0; i<12; i++){
+	//}
+	for(int i=0; i<=(tData[0].endOfEntryThisRound+tData[0].numThreadsThisRound);i++){
 		cout<<userInput[i]<<endl;
 	}
+	//for(int i=0; i<; i++){
+	//	cout<<userInput[i]<<endl;
+	//}
 
 }
 
