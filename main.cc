@@ -66,19 +66,19 @@ class barrier{
 	
 	void wait(int a){
 		totalThread=a;
-		cout<<"Entered in wait"<<endl;
+		cout<<"****Entered in wait****"<<endl;
 		sem_getvalue(&mutex, &value);
 		cout<<"Mutex: "<<value<<endl;
 		sem_wait(&mutex);
 			count++;
-			cout<<"Count: "<<count<<endl;
+			cout<<"Count: "<<count<<endl<<endl;
 			if(count<totalThread){
 				sem_post(&mutex);
 				sem_wait(&throttle);
 				sem_post(&hs);
 				//return;	
 			}else{
-				for(int i=0; i<count-1; i++){
+				for(int i=0; i<totalThread-1; i++){
 					sem_post(&throttle);
 					sem_wait(&hs);		
 				}
@@ -105,9 +105,19 @@ void *maxFinder(void *arg){
 	cout<<"Round: "<<roundNumber<<endl<<"Num Thread in round "<<roundNumber<<" : "<<numThreadsThisRound<<endl;
 
 	cout<<"ThreadID: "<<id<<endl<<"endOfEntryThisRound: "<<endOfEntryThisRound<<endl<<"comparePointerThisRound: "<<comparePointerThisRound<<endl<<endl;
+
+	//if(roundNumber==3){
+	//	cout<<"userINput[12]: "<<userInput[12]<<endl;
+	//	cout<<"userInput[13]: "<<userInput[13]<<endl;
+	//}
 	
 	//max[id] = userInput[2*id]>=userInput[2*id+1]?userInput[2*id]:userInput[2*id+1];
 	max[id] = userInput[comparePointerThisRound+2*id]>=userInput[comparePointerThisRound+2*id+1]?userInput[comparePointerThisRound+2*id]:userInput[comparePointerThisRound+2*id+1];
+	
+	cout<<"****************************************"<<endl;
+	cout<<userInput[comparePointerThisRound+2*id]<<endl;
+	cout<<userInput[comparePointerThisRound+2*id+1]<<endl;
+	
 	cout<<"max["<<id<<"]: "<<max[id]<<endl;
 	userInput[endOfEntryThisRound+id] = max[id];
 	cout<<"userInput["<<(endOfEntryThisRound+id)<<"]: "<<userInput[endOfEntryThisRound+id]<<endl<<endl;
@@ -242,6 +252,8 @@ int main(int argc, char *argv[]){
 	for(int i=0; i<=(tData[0].endOfEntryThisRound+tData[0].numThreadsThisRound);i++){
 		cout<<userInput[i]<<endl;
 	}
+
+	cout<<userInput[14]<<endl;
 	//for(int i=0; i<; i++){
 	//	cout<<userInput[i]<<endl;
 	//}
