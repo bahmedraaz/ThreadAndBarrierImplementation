@@ -65,19 +65,19 @@ class barrier{
 	int value;
 	
 	void wait(int a, struct threadInfo b){
-		totalThread=a;
 		//cout<<"****Entered in wait****"<<endl;
 		cout<<"***Thread "<<b.threadID<<" Entered in wait***"<<endl;
 		sem_getvalue(&mutex, &value);
 		cout<<"Mutex after acquiring: "<<value<<endl;
 		sem_wait(&mutex);
+			totalThread=a;
 			count++;
 			cout<<"Count: "<<count<<endl<<endl;
 			if(count<totalThread){
 				sem_post(&mutex);
 				sem_wait(&throttle);
 				sem_post(&hs);
-				//return;	
+				return;	
 			}else{
 				for(int i=0; i<totalThread-1; i++){
 					sem_post(&throttle);
@@ -247,6 +247,13 @@ int main(int argc, char *argv[]){
 	int numThreads = nextPow2/2;
 	cout<<"Initial number of threads: "<<numThreads<<endl<<endl;
 
+	int resultEntryPositionUserInput = nextPow2;
+	int tempNextPow2 = nextPow2;
+
+	for(int i=1; i<=numRound; i++){
+		resultEntryPositionUserInput = resultEntryPositionUserInput + tempNextPow2/pow(2,i);
+	}
+
 	pthread_t *tID;
 	tID = (pthread_t *)malloc(sizeof(pthread_t)*numThreads);
 	
@@ -279,6 +286,8 @@ int main(int argc, char *argv[]){
 	//for(int i=0; i<; i++){
 	//	cout<<userInput[i]<<endl;
 	//}
+
+	cout<<"Maximum: "<<userInput[resultEntryPositionUserInput-1]<<endl;
 
 }
 
