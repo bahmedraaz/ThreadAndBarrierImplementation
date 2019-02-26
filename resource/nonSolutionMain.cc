@@ -34,6 +34,7 @@ struct threadInfo{
 class barrier{
 	sem_t mutex;
 	sem_t waitq;
+	sem_t throttle;
 	sem_t hs;
 	int totalThread;
 	int count;
@@ -42,28 +43,67 @@ class barrier{
 	void barrierInit(){
 		sem_init(&mutex,0,1);
 		sem_init(&waitq,0,0);
+		sem_init(&throttle,0,0);
 		sem_init(&hs,0,0);
 		count = 0;
+		//totalThread=a;
+		int valueMutex;
+		int valueWaitq;
+		int valueThrottle;
+		int valueHs;
+		sem_getvalue(&mutex, &valueMutex);
+		sem_getvalue(&waitq, &valueWaitq);
+		sem_getvalue(&throttle, &valueThrottle);
+		sem_getvalue(&hs, &valueHs);
+		cout<<endl;
+		cout<<"Initial Mutex value "<<valueMutex<<endl;				
+		cout<<"Initial Waitq value "<<valueWaitq<<endl;			
+		cout<<"Initial Throttle value "<<valueThrottle<<endl;			
+		cout<<"Initial Hs value "<<valueHs<<endl<<endl;			
 	}
 	
-	void wait(int a){
-        sem_wait(&mutex);
+	int value;
+	
+	void wait(int a, struct threadInfo b){
 		totalThread=a;
-        count++;
-        if(count < totalThread){
-            sem_post(&mutex);
-            sem_wait(&waitq);
-            sem_post(&hs);
-            return;
-        } else{
-            for(int i=0; i < totalThread - 1; i++){
-                sem_post(&waitq);
-                sem_wait(&hs);
-            }
-            count = 0;
-        }
+		//cout<<"****Entered in wait****"<<endl;
+		cout<<"***Thread "<<b.threadID<<" Entered in wait***"<<endl;
+		sem_getvalue(&mutex, &value);
+		cout<<"Mutex after acquiring: "<<value<<endl;
+		sem_wait(&mutex);
+			count++;
+			cout<<"Count: "<<count<<endl<<endl;
+			if(count<totalThread){
+				sem_post(&mutex);
+				sem_wait(&throttle);
+				sem_post(&hs);
+				//return;	
+			}else{
+				for(int i=0; i<totalThread-1; i++){
+					sem_post(&throttle);
+					sem_wait(&hs);		
+				}
+				count=0;
+			}
 		sem_post(&mutex);	
 	}
+
+	
+	void waitTest(int a){
+		totalThread=a;
+		sem_wait(&mutex);
+			count++;
+		sem_post(&mutex);
+
+		if(count==a){
+			sem_post(&throttle);
+		}
+		
+		sem_wait(&throttle);
+		sem_post(&throttle);
+	}
+
+
 };
 
 
@@ -90,11 +130,11 @@ void *maxFinder(void *arg){
 	//}
 	
 	//max[id] = userInput[2*id]>=userInput[2*id+1]?userInput[2*id]:userInput[2*id+1];
-	max[id] = userInput[comparePointerThisRound+2*id]>=userInput[comparePointerThisRound+2*id+1]?userInput[comparePointerThisRound+2*id]:userInput[comparePointerThisRound+2*id+1];
+	max[id] = userInput[comparePointerThisRound+2*id]>=userInput[comparePointerThisRound+(2*id+1)]?userInput[comparePointerThisRound+2*id]:userInput[comparePointerThisRound+(2*id+1)];
 	
 	cout<<"****************************************"<<endl;
-	cout<<userInput[comparePointerThisRound+2*id]<<endl;
-	cout<<userInput[comparePointerThisRound+2*id+1]<<endl;
+	cout<<"userInput["<<comparePointerThisRound+2*id<<"]:"<<userInput[comparePointerThisRound+2*id]<<endl;
+	cout<<"userInput["<<(comparePointerThisRound+(2*id+1))<<"]:"<<userInput[comparePointerThisRound+(2*id+1)]<<endl;
 	
 	cout<<"max["<<id<<"]: "<<max[id]<<endl;
 	userInput[endOfEntryThisRound+id] = max[id];
@@ -116,15 +156,19 @@ void *maxFinder(void *arg){
 	
 	cout<<"****Just befoer barrier******"<<endl;
 
-	barrierObj.wait(numThreadsThisRound);
+	//barrierObj.wait(numThreadsThisRound);
+	barrierObj.wait(numThreadsThisRound, newThreadInfo);
 
 	cout<<"#####After coming out of Barrier_wait####"<<endl;
-	if(newThreadInfo.threadID>=numThreadsThisRound/2){
+	
+	cout<<"########################"<<endl;
+	cout<<"numThreadsThisRound/2: "<<(numThreadsThisRound/2)<<endl;
+	if(newThreadInfo.threadID>=(p->numThreadsThisRound/2)){
 		cout<<"Thread "<<newThreadInfo.threadID<<" exiting"<<endl;
 		pthread_exit(0);
 	}
 	
-	if(newThreadInfo.threadID<numThreadsThisRound/2){
+	if(newThreadInfo.threadID<(p->numThreadsThisRound/2)){
 		maxFinder((void *)&newThreadInfo);
 	}
 	
@@ -203,23 +247,6 @@ int main(int argc, char *argv[]){
 	int numThreads = nextPow2/2;
 	cout<<"Initial number of threads: "<<numThreads<<endl<<endl;
 
-	int resultEntryPositionUserInput=nextPow2;
-	int tempNextPow2 = nextPow2;
-
-	for(int i=1; i<=numRound; i++){
-		cout<<"resultEntryPositionUserInput: "<<resultEntryPositionUserInput<<endl;
-		resultEntryPositionUserInput = resultEntryPositionUserInput + tempNextPow2/pow(2,i);
-		//int tempNextPow2 =tempNextPow2/2;	
-	}
-	//cout<<"tempNumRound"<<tempNumRound<<endl;
-	
-//	for(int tempNumRound=numRound; tempNumRound!=1; tempNumRound=tempNumRound/2){
-//		//tempNumRound = tempNumRound/2;
-//		cout<<"tempNumRound: "<<tempNumRound<<endl;
-//		resultEntryPositionUserInput += resultEntryPositionUserInput; 
-//	}
-
-	
 	pthread_t *tID;
 	tID = (pthread_t *)malloc(sizeof(pthread_t)*numThreads);
 	
@@ -240,23 +267,18 @@ int main(int argc, char *argv[]){
 		pthread_create(&tID[i], NULL, maxFinder, &tData[i]);
 	}
 
-	for(int i=0; i<numThreads; i++){
-		pthread_join(tID[i], NULL);
-	}
-	//for(int i=0; i<=(tData[0].endOfEntryThisRound+tData[0].numThreadsThisRound);i++){
-	//	cout<<userInput[i]<<endl;
+	//for(int i=0; i<numThreads; i++){
+		pthread_join(tID[0], NULL);
+		//cout<<userInput[8+i]<<endl;
 	//}
+	for(int i=0; i<=(tData[0].endOfEntryThisRound+tData[0].numThreadsThisRound);i++){
+		cout<<userInput[i]<<endl;
+	}
 
-	//cout<<"****Final output******: "<<userInput[numEntry*2-2]<<endl;
-	cout<<"*#*#*#*#*#: "<<tData[0].endOfEntryThisRound<<endl;
-	cout<<"*#*#*#*#:"<<tData[0].numThreadsThisRound<<endl;
-	cout<<"****Final output******: "<<userInput[resultEntryPositionUserInput-1]<<endl;
-	//cout<<"****Final output******: "<<userInput[endOfEntry+(endOfEntry/2)]<<endl;
-	//cout<<"asdfjasdlkfjasdl;fj: "<<resultEntryPositionUserInput<<endl;
+	//cout<<userInput[14]<<endl;
 	//for(int i=0; i<; i++){
 	//	cout<<userInput[i]<<endl;
 	//}
-	cout<<"resultEntryPositionUserInput: "<<(resultEntryPositionUserInput-1)<<endl;
 
 }
 
