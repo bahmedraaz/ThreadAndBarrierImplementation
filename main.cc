@@ -253,7 +253,7 @@ int main(int argc, char *argv[]){
 		cout<<userInput[i]<<endl;
 	}
 
-	cout<<userInput[14]<<endl;
+	//cout<<userInput[14]<<endl;
 	//for(int i=0; i<; i++){
 	//	cout<<userInput[i]<<endl;
 	//}
