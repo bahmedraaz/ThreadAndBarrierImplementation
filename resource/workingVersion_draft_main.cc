@@ -80,12 +80,26 @@ void *maxFinder(void *arg){
 	int comparePointerThisRound = p->comparePointerThisRound;
 	int max[numThreadsThisRound];
 
+	cout<<"Round: "<<roundNumber<<endl<<"Num Thread in round "<<roundNumber<<" : "<<numThreadsThisRound<<endl;
 
+	cout<<"ThreadID: "<<id<<endl<<"endOfEntryThisRound: "<<endOfEntryThisRound<<endl<<"comparePointerThisRound: "<<comparePointerThisRound<<endl<<endl;
 
-	//To compare pair of entries and put the maximum in newly allocated array max[]
+	//if(roundNumber==3){
+	//	cout<<"userINput[12]: "<<userInput[12]<<endl;
+	//	cout<<"userInput[13]: "<<userInput[13]<<endl;
+	//}
+	
+	//max[id] = userInput[2*id]>=userInput[2*id+1]?userInput[2*id]:userInput[2*id+1];
 	max[id] = userInput[comparePointerThisRound+2*id]>=userInput[comparePointerThisRound+2*id+1]?userInput[comparePointerThisRound+2*id]:userInput[comparePointerThisRound+2*id+1];
 	
+	cout<<"****************************************"<<endl;
+	cout<<userInput[comparePointerThisRound+2*id]<<endl;
+	cout<<userInput[comparePointerThisRound+2*id+1]<<endl;
+	
+	cout<<"max["<<id<<"]: "<<max[id]<<endl;
 	userInput[endOfEntryThisRound+id] = max[id];
+	cout<<"userInput["<<(endOfEntryThisRound+id)<<"]: "<<userInput[endOfEntryThisRound+id]<<endl<<endl;
+		
 
 	if(roundNumber==totalRound){
 		return(NULL);
@@ -100,12 +114,13 @@ void *maxFinder(void *arg){
 	newThreadInfo.endOfEntryThisRound = endOfEntryThisRound+numThreadsThisRound;
 	newThreadInfo.comparePointerThisRound = endOfEntryThisRound;
 	
-	//Wait in the barrier untill all the threads arrive
+	cout<<"****Just befoer barrier******"<<endl;
+
 	barrierObj.wait(numThreadsThisRound);
 
-	//We will reuse half the threads in next round and half of them will exit. The first if statement is for discarding half of the threads and the next if statement will check and send half of the threads to recursively call this same maxFinder function. 
+	cout<<"#####After coming out of Barrier_wait####"<<endl;
 	if(newThreadInfo.threadID>=numThreadsThisRound/2){
-		//cout<<"Thread "<<newThreadInfo.threadID<<" exiting"<<endl;
+		cout<<"Thread "<<newThreadInfo.threadID<<" exiting"<<endl;
 		pthread_exit(0);
 	}
 	
@@ -171,23 +186,38 @@ int main(int argc, char *argv[]){
 	int endOfEntry = nextPow2;
 	int numRound = roundCalculator(nextPow2);
 
+	cout<<"Number of Entry: "<<numEntry<<endl;
+	cout<<"Next power of 2: "<<nextPow2<<endl;
+	cout<<"Total round required: "<<numRound<<endl;
 	
 	//fill the slot between the last entry and next power of 2 with some large negative number;
 	for(int i=numEntry; i<nextPow2; i++){
-		userInput[i] = -9999;
+		userInput[i] = -99999999;
 	}
 	
+	//for(int i=0; i<nextPow2; i++){
+	//	cout<<"After filling with negative number: "<<userInput[i]<<endl;
+	//}
+
 	//The number of threads are half of the number of entries
 	int numThreads = nextPow2/2;
+	cout<<"Initial number of threads: "<<numThreads<<endl<<endl;
 
 	int resultEntryPositionUserInput=nextPow2;
 	int tempNextPow2 = nextPow2;
 
-	// Calculate the position of final result in the userInput array
 	for(int i=1; i<=numRound; i++){
-		//cout<<"resultEntryPositionUserInput: "<<resultEntryPositionUserInput<<endl;
+		cout<<"resultEntryPositionUserInput: "<<resultEntryPositionUserInput<<endl;
 		resultEntryPositionUserInput = resultEntryPositionUserInput + tempNextPow2/pow(2,i);
+		//int tempNextPow2 =tempNextPow2/2;	
 	}
+	//cout<<"tempNumRound"<<tempNumRound<<endl;
+	
+//	for(int tempNumRound=numRound; tempNumRound!=1; tempNumRound=tempNumRound/2){
+//		//tempNumRound = tempNumRound/2;
+//		cout<<"tempNumRound: "<<tempNumRound<<endl;
+//		resultEntryPositionUserInput += resultEntryPositionUserInput; 
+//	}
 
 	
 	pthread_t *tID;
@@ -213,6 +243,20 @@ int main(int argc, char *argv[]){
 	for(int i=0; i<numThreads; i++){
 		pthread_join(tID[i], NULL);
 	}
+	//for(int i=0; i<=(tData[0].endOfEntryThisRound+tData[0].numThreadsThisRound);i++){
+	//	cout<<userInput[i]<<endl;
+	//}
 
-	cout<<"Maximum: "<<userInput[resultEntryPositionUserInput-1]<<endl;
+	//cout<<"****Final output******: "<<userInput[numEntry*2-2]<<endl;
+	cout<<"*#*#*#*#*#: "<<tData[0].endOfEntryThisRound<<endl;
+	cout<<"*#*#*#*#:"<<tData[0].numThreadsThisRound<<endl;
+	cout<<"****Final output******: "<<userInput[resultEntryPositionUserInput-1]<<endl;
+	//cout<<"****Final output******: "<<userInput[endOfEntry+(endOfEntry/2)]<<endl;
+	//cout<<"asdfjasdlkfjasdl;fj: "<<resultEntryPositionUserInput<<endl;
+	//for(int i=0; i<; i++){
+	//	cout<<userInput[i]<<endl;
+	//}
+	cout<<"resultEntryPositionUserInput: "<<(resultEntryPositionUserInput-1)<<endl;
+
 }
+
