@@ -90,15 +90,15 @@ class barrier{
 
 	
 	void waitTest(int a){
-		totalThread=a;
 		sem_wait(&mutex);
+			totalThread=a;
 			count++;
-		sem_post(&mutex);
 
 		if(count==a){
 			sem_post(&throttle);
 		}
 		
+		sem_post(&mutex);
 		sem_wait(&throttle);
 		sem_post(&throttle);
 	}
@@ -158,6 +158,7 @@ void *maxFinder(void *arg){
 
 	//barrierObj.wait(numThreadsThisRound);
 	barrierObj.wait(numThreadsThisRound, newThreadInfo);
+	//barrierObj.waitTest(numThreadsThisRound);
 
 	cout<<"#####After coming out of Barrier_wait####"<<endl;
 	
@@ -282,10 +283,10 @@ int main(int argc, char *argv[]){
 		cout<<userInput[i]<<endl;
 	}
 
-	//cout<<userInput[14]<<endl;
-	//for(int i=0; i<; i++){
-	//	cout<<userInput[i]<<endl;
-	//}
+	cout<<userInput[14]<<endl;
+	for(int i=0; i<tData[0].endOfEntryThisRound; i++){
+		cout<<userInput[i]<<endl;
+	}
 
 	cout<<"Maximum: "<<userInput[resultEntryPositionUserInput-1]<<endl;
 

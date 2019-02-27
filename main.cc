@@ -35,6 +35,7 @@ class barrier{
 	sem_t mutex;
 	sem_t waitq;
 	sem_t hs;
+	sem_t throttle;
 	int totalThread;
 	int count;
 	
@@ -42,6 +43,7 @@ class barrier{
 	void barrierInit(){
 		sem_init(&mutex,0,1);
 		sem_init(&waitq,0,0);
+		sem_init(&throttle,0,0);
 		sem_init(&hs,0,0);
 		count = 0;
 	}
@@ -63,6 +65,19 @@ class barrier{
             count = 0;
         }
 		sem_post(&mutex);	
+	}
+
+
+	void waitTest(int a){
+		sem_wait(&mutex);
+			totalThread=a;
+			count++;
+		if(count==totalThread){
+			sem_post(&throttle);
+		}
+		sem_post(&mutex);
+		sem_wait(&throttle);
+		sem_post(&throttle);
 	}
 };
 
@@ -213,6 +228,6 @@ int main(int argc, char *argv[]){
 	for(int i=0; i<numThreads; i++){
 		pthread_join(tID[i], NULL);
 	}
-
+	
 	cout<<"Maximum: "<<userInput[resultEntryPositionUserInput-1]<<endl;
 }
