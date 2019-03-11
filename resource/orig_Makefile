@@ -3,7 +3,7 @@ CC = g++
 all: user
 
 user:
-	$(CC) -o max tanmoy.cpp -lpthread
+	$(CC) -o max main.cpp -lpthread
 clean:
 	rm -rf max
 main:
