@@ -13,6 +13,14 @@ int *userInput;
 
 using namespace std;
 
+void *printID(void *arg){
+	int *p = (int*)arg;
+	int a = *p;
+	cout<<"Thread ID: "<<a<<endl;
+	//cout<<"Hello"<<endl;
+	pthread_exit(0);
+}
+
 struct threadInfo{
 	int threadID;
 	int initialThreadNumber;
@@ -32,19 +40,17 @@ class barrier{
 	int count;
 	
 	public:
-	void barrierInit(int args){
+	void barrierInit(){
 		sem_init(&mutex,0,1);
 		sem_init(&waitq,0,0);
 		sem_init(&throttle,0,0);
 		sem_init(&hs,0,0);
 		count = 0;
-		totalThread = args;
-		
 	}
 	
-	void wait(){
+	void wait(int a){
         sem_wait(&mutex);
-		//totalThread=a;
+		totalThread=a;
         count++;
         if(count < totalThread){
             sem_post(&mutex);
@@ -89,17 +95,12 @@ void *maxFinder(void *arg){
 	int comparePointerThisRound = p->comparePointerThisRound;
 	int max[numThreadsThisRound];
 
-	//cout<<"currentRoundNumber"<<roundNumber<<endl;
-	//cout<<"threadID: "<<id<<endl;
-
 
 
 	//To compare pair of entries and put the maximum in newly allocated array max[]
-	if(id < numThreadsThisRound){
 	max[id] = userInput[comparePointerThisRound+2*id]>=userInput[comparePointerThisRound+2*id+1]?userInput[comparePointerThisRound+2*id]:userInput[comparePointerThisRound+2*id+1];
 	
 	userInput[endOfEntryThisRound+id] = max[id];
-	}
 
 	if(roundNumber==totalRound){
 		return(NULL);
@@ -115,20 +116,17 @@ void *maxFinder(void *arg){
 	newThreadInfo.comparePointerThisRound = endOfEntryThisRound;
 	
 	//Wait in the barrier untill all the threads arrive
-	//cout<<"Entering Thread: "<<id<<" round: "<<roundNumber<<endl;
-	//barrierObj.wait(numThreadsThisRound);
-	barrierObj.wait();
-	//cout<<"Exiting Thread: "<<id<<" round: "<<roundNumber<<endl;
+	barrierObj.wait(numThreadsThisRound);
 
 	//We will reuse half the threads in next round and half of them will exit. The first if statement is for discarding half of the threads and the next if statement will check and send half of the threads to recursively call this same maxFinder function. 
-	//if(newThreadInfo.threadID>=numThreadsThisRound/2){
+	if(newThreadInfo.threadID>=numThreadsThisRound/2){
 		//cout<<"Thread "<<newThreadInfo.threadID<<" exiting"<<endl;
-	//	pthread_exit(0);
-	//}
+		pthread_exit(0);
+	}
 	
-	//if(newThreadInfo.threadID<numThreadsThisRound/2){
+	if(newThreadInfo.threadID<numThreadsThisRound/2){
 		maxFinder((void *)&newThreadInfo);
-	//}
+	}
 	
 
 	//cout<<"hello bulbul"<<endl;
@@ -145,17 +143,19 @@ int roundCalculator(int parameter)
   return result;
 }
 
-// compute next smallest powe of two greater than or equal to n
-unsigned int nextPowerOf2(unsigned int n){
-	unsigned count = 0;
+// compute power of two greater than or equal to n
+unsigned nextPowerOf2(unsigned n)
+{
+	// decrement n (to handle cases when n itself 
+	// is a power of 2)
+	n = n - 1;
 	
-	if(n && !(n &(n-1))) return n;
-	
-	while(n !=0){
-		n >>= 1;
-		count += 1;
-	}
-	return 1 << count;
+	// do till only one bit is left
+	while (n & n - 1)
+		n = n & n - 1;	// unset rightmost bit
+	// n is now a power of two (less than n)
+	// return next power of 2
+	return n << 1;
 }
 
 
@@ -183,10 +183,8 @@ int main(int argc, char *argv[]){
 	}
 
 	nextPow2 = nextPowerOf2(numEntry); //find what is the next highest power of two based on the number of entries
-	//cout<<"nextPow2: "<<nextPow2<<endl;
 	int endOfEntry = nextPow2;
 	int numRound = roundCalculator(nextPow2);
-	//cout<<"totalRoundRequired: "<<numRound<<endl;
 
 	
 	//fill the slot between the last entry and next power of 2 with some large negative number;
@@ -196,7 +194,6 @@ int main(int argc, char *argv[]){
 	
 	//The number of threads are half of the number of entries
 	int numThreads = nextPow2/2;
-	//cout<<"numThreads: "<<numThreads<<endl;
 
 	int resultEntryPositionUserInput=nextPow2;
 	int tempNextPow2 = nextPow2;
@@ -213,7 +210,7 @@ int main(int argc, char *argv[]){
 	
 	struct threadInfo tData[numThreads];
 
-	barrierObj.barrierInit(numThreads);
+	barrierObj.barrierInit();
 
 	for(int i=0; i<numThreads; i++){
 		tData[i].threadID = i;
