@@ -15,10 +15,6 @@ The following code implements a parallel binary reduction algorithm to find the 
 #include <math.h>
 #include <semaphore.h>
 
-//**** Testing ****
-#include <fstream>
-//****************
-
 #define INPUT_ARRAY_SIZE 1024
 
 int *userInput;
@@ -181,7 +177,7 @@ int main(int argc, char *argv[]){
 	int nextPow2 = 0;
 	
 	//Wait for the user input
-	/*while(1){
+	while(1){
 		
 		getline(cin, userInputString);
 		if(userInputString==""){
@@ -193,24 +189,7 @@ int main(int argc, char *argv[]){
 			numEntry++;
 		}
 	
-	}*/
-
-	//*********** Testing *****************
-	ifstream myFileIn("inputFile.txt");
-	int id;
-		
-	while(myFileIn >> id){
-		userInput[inputIndex] = id;
-		inputIndex++;
-		numEntry++;
-		//cout<<id<<endl;
 	}
-
-	//for(int i=0; i<numEntry; i++){
-	//	cout<<userInput[i]<<endl;
-	//}
-
-	//*************************************
 
 	nextPow2 = nextPowerOf2(numEntry); //find what is the next highest power of two based on the number of entries
 	//cout<<"nextPow2: "<<nextPow2<<endl; //for debugging
@@ -264,5 +243,5 @@ int main(int argc, char *argv[]){
 		pthread_join(tID[i], NULL); //join the threads with parent
 	}
 	
-	cout<<"         Maximum: "<<userInput[resultEntryPositionUserInput-1]<<endl; //print the maximum number
+	cout<<"Maximum: "<<userInput[resultEntryPositionUserInput-1]<<endl; //print the maximum number
 }
