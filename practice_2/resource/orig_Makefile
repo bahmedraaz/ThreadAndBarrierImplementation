@@ -1,0 +1,10 @@
+CC = g++
+
+all: user
+
+user:
+	$(CC) -o max main.cpp -lpthread
+clean:
+	rm -rf max
+main:
+	$(CC) -o main main.cc

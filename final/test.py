@@ -3,17 +3,17 @@ import os
 import random
 import time
 
-command = "./main"
+command = "./max"
 rmCommand = "rm "+"inputFile.txt"
 
 for _ in range(50):
 	
 	limit = random.randint(1,20000)
 	myList = []
-	for i in range(500):
+	for i in range(8192):
 		myList.append(random.randint(1,limit))
 	
-	with open("inputFile.txt", 'a') as inputFile:
+	with open("inputFile.txt", 'w') as inputFile:
 		for i in myList:
 			inputFile.write("%d\n"%i)
 
@@ -21,7 +21,7 @@ for _ in range(50):
 	os.system(command)
 	print("*******")
 	time.sleep(1)
-	os.system(rmCommand)
+#	os.system(rmCommand)
 	
 	
 	
