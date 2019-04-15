@@ -19,7 +19,7 @@ The following code implements a parallel binary reduction algorithm to find the 
 //TEST. All the inputs should be put in a text file from where this program will read the input. For normal operation, wee need to com ment 
 //the definition of TEST.
 
-//#define TEST
+#define TEST
 
 //**** Testing ****
 #include <fstream>
